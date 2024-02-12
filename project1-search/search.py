@@ -97,6 +97,17 @@ def depthFirstSearch(problem):
     while not frontier.isEmpty():
         currentState, path = frontier.pop()
 
+        if problem.isGoalState(problem.getStartState()):
+            return path
+
+        if currentState not in visited:
+            visited.add(currentState)
+
+            for successor, action, cost in problem.getSuccessors(currentState):
+                if successor not in visited:
+                    frontier.push((successor, path + [action]))
+
+    return []
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
