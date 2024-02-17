@@ -19,6 +19,7 @@ Pacman agents (in searchAgents.py).
 
 import util
 
+
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -70,7 +71,8 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s, s, w, s, w, w, s, w]
+    return [s, s, w, s, w, w, s, w]
+
 
 def depthFirstSearch(problem):
     """
@@ -97,7 +99,7 @@ def depthFirstSearch(problem):
     while not frontier.isEmpty():
         currentState, path = frontier.pop()
 
-        if problem.isGoalState(problem.getStartState()):
+        if problem.isGoalState(currentState):
             return path
 
         if currentState not in visited:
@@ -108,15 +110,58 @@ def depthFirstSearch(problem):
                     frontier.push((successor, path + [action]))
 
     return []
+
+
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import Queue
+    queue = Queue()
+    queue.push((problem.getStartState(), []))
+
+    visited = set()
+
+    while not queue.isEmpty():
+        currentState, path = queue.pop()
+
+        if problem.isGoalState(currentState):
+            return path
+
+        if currentState not in visited:
+            visited.add(currentState)
+
+            for successor, action, cost in problem.getSuccessors(currentState):
+                if successor not in visited:
+                    new_path = path + [action]
+                    queue.push((successor, new_path))
+    return []
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue
+    # initialize
+    minHeap = PriorityQueue()
+    minHeap.push((problem.getStartState(), [], 0), 0)
+
+    visited = set()
+
+    while not minHeap.isEmpty():
+        currentState, path, currentCost = minHeap.pop()
+
+        if problem.isGoalState(currentState):
+            return path
+
+        if currentState not in visited:
+            visited.add(currentState)
+
+            for successor, action, cost in problem.getSuccessors(currentState):
+                if successor not in visited:
+                    new_cost = cost + currentCost
+                    minHeap.push((successor, path + [action], new_cost), new_cost)
+    return []
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -125,10 +170,34 @@ def nullHeuristic(state, problem=None):
     """
     return 0
 
+
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from util import PriorityQueue
+    # initialize
+    minHeap = PriorityQueue()
+    start = problem.getStartState()
+    minHeap.push((start, [], 0), 0 + heuristic(start, problem))  # (state, path, cost)
+
+    visited = set()
+
+    while not minHeap.isEmpty():
+        currentState, path, currentCost = minHeap.pop()
+
+        if problem.isGoalState(currentState):
+            return path
+
+        if currentState not in visited:
+            visited.add(currentState)
+
+            for successor, action, cost in problem.getSuccessors(currentState):
+                if successor not in visited:
+                    new_cost = cost + currentCost
+                    total_cost = new_cost + heuristic(successor, problem)
+                    minHeap.push((successor, path + [action], new_cost), total_cost)
+
+    return []
 
 
 # Abbreviations
