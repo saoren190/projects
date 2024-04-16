@@ -239,22 +239,40 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         beta = float("inf")
         _, action = alphaBeta(0, self.depth, gameState, alpha, beta)
         return action
-
-
 class ExpectimaxAgent(MultiAgentSearchAgent):
-    """
-      Your expectimax agent (question 4)
-    """
-
     def getAction(self, gameState):
-        """
-        Returns the expectimax action using self.depth and self.evaluationFunction
+        def tState(state, depth):
+            return state.isWin() or state.isLose() or depth == 0
 
-        All ghosts should be modeled as choosing uniformly at random from their
-        legal moves.
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def max(state, depth):
+            if tState(state, depth):
+                return self.evaluationFunction(state), None
+            value, bestAction = float("-inf"), None
+            for action in state.getLegalActions(0):
+                nextState = state.generateSuccessor(0, action)
+                nextValue, _ = stra(1, depth, nextState)
+                if value < nextValue:
+                    value, bestAction = nextValue, action
+            return value, bestAction
+
+        def expect(state, agentInd, depth):
+            if tState(state, depth):
+                return self.evaluationFunction(state), None
+            total, actions = 0, state.getLegalActions(agentInd)
+            for action in actions:
+                nextState = state.generateSuccessor(agentInd, action)
+                nextValue, _ = stra((agentInd + 1) % state.getNumAgents(), depth - 1 if agentInd == state.getNumAgents() - 1 else depth, nextState)
+                total += nextValue
+            return total / len(actions) if actions else self.evaluationFunction(state), None
+
+        def stra(agentInd, depth, state):
+            if agentInd == 0:
+                return max(state, depth)
+            else:
+                return expect(state, agentInd, depth)
+
+        return stra(0, self.depth, gameState)[1]
+
 
 
 def betterEvaluationFunction(currentGameState):
@@ -267,6 +285,39 @@ def betterEvaluationFunction(currentGameState):
     "*** YOUR CODE HERE ***"
     util.raiseNotDefined()
 
+
+def betterEvaluationFunction(currentGameState):
+
+    pacmanP = currentGameState.getPacmanPosition()
+    foodP = currentGameState.getFood().asList()
+    ghostStates = currentGameState.getGhostStates()
+    capsules = currentGameState.getCapsules()
+    currScore = currentGameState.getScore()
+
+    def getReciprocalDistance(items):
+        distances = [manhattanDistance(pacmanP, item) for item in items]
+        return min(distances) if distances else float('inf')
+
+    def evaluateGhostProximity(ghostStates):
+        scoreAdj = 0
+        for ghost in ghostStates:
+            distance = manhattanDistance(pacmanP, ghost.getPosition())
+            if ghost.scaredTimer:  # If the ghost is scared
+                scoreAdj += 50 / (distance + 1)
+            else:
+                # Penalize being too close to a non-scared ghost
+                if distance <= 2:
+                    scoreAdj -= 200 / (distance + 1)
+        return scoreAdj
+
+    nearestDst = getReciprocalDistance(foodP)
+    foodScore = 1.0 / nearestDst if nearestDst != float('inf') else 0
+
+    ghostScoreAdj = evaluateGhostProximity(ghostStates)
+
+    capsuleScore = -2 * len(capsules)
+
+    return currScore + foodScore + ghostScoreAdj + capsuleScore
 
 # Abbreviation
 better = betterEvaluationFunction
