@@ -95,6 +95,7 @@ class QLearningAgent(ReinforcementAgent):
         legalActions = self.getLegalActions(state)
         action = None
         "*** YOUR CODE HERE ***"
+        # Epsilon Greedy
         if not legalActions:
             return None
         if util.flipCoin(self.epsilon):
